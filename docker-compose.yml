@@ -1,0 +1,47 @@
+version: '3'
+services:
+
+  db:
+    image: postgres
+    restart: always
+    volumes:
+      - ./db:/data/db
+    environment:
+      POSTGRES_PASSWORD: "pdns"
+      POSTGRES_USER: "pdns"
+      PGDATA: "/data/db/postgres"
+
+  zeek-pdns-web:
+    build:
+      context: .
+      dockerfile: Dockerfile-web
+    volumes:
+      - ./db:/data/db
+    links:
+      - db:db
+    environment:
+      PDNS_STORE_TYPE: "postgresql"
+      PDNS_STORE_URI: "postgres://pdns:pdns@db/pdns?sslmode=disable"
+
+  zeek-pdns-ingest:
+    build:
+      context: .
+      dockerfile: Dockerfile-index
+    volumes:
+      - ./skipped:/data/skipped
+      - ./spool:/data/logs
+    links:
+      - db:db
+    environment:
+      PDNS_STORE_TYPE: "postgresql"
+      PDNS_STORE_URI: "postgres://pdns:pdns@db/pdns?sslmode=disable"
+  nginx:
+    image: "nginx:alpine"
+    ports:
+      - 443:443
+    links:
+      - zeek-pdns-web:zeek-pdns-web
+    volumes:
+      - ./auth:/etc/nginx/conf.d
+      - ./auth/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /etc/letsencrypt:/etc/letsencrypt

@@ -1,0 +1,9 @@
+FROM golang
+
+WORKDIR /opt
+RUN mkdir -p /data/logs /data/skipped
+RUN env GIT_TERMINAL_PROMPT=1 go get -v github.com/JustinAzoff/bro-pdns
+COPY ./index_pdns.bash /opt
+RUN chmod +x /opt/index_pdns.bash
+
+ENTRYPOINT ["/opt/index_pdns.bash"]

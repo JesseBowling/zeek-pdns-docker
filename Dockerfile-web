@@ -1,0 +1,8 @@
+FROM golang
+
+RUN mkdir -p /data/db 
+RUN env GIT_TERMINAL_PROMPT=1 go get -v github.com/JustinAzoff/bro-pdns
+COPY ./web_pdns.bash /opt
+RUN chmod +x /opt/web_pdns.bash
+EXPOSE 8080
+ENTRYPOINT ["/opt/web_pdns.bash"]
