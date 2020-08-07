@@ -4,7 +4,7 @@ This project uses Docker, docker-compose, and LetsEncrypt to spin up an instance
  in a Docker container, and publish it with an HTTPS front-end using basic auth. No warranties expressed or implied
  , use at your own risk, PR's welcome, etc...
  
- #Setup
+# Setup
  
  * Set up a Linux machine with Docker and docker-compose installed
  ** This machine uses LetsEncrypt, so it should be publicly acessible (check public IP/firewalls)
@@ -19,7 +19,7 @@ This project uses Docker, docker-compose, and LetsEncrypt to spin up an instance
   terrible. You have been warned.
 * `docker-compose build && docker-compose up -d`
 
-#Operations
+## Operations
 
 Assuming the above all went well, you can now move any files you want ingested into the `./spool` directory. I
  typically run this setup on a box that is NOT the zeek sensor (and suggest you do too!), so I use the `./ingest
@@ -54,7 +54,7 @@ You should probably consider restarting the pdns containers on at least a daily 
 . Unfortunately the bro-pdns ingest is quite noisy from a log perspective, with no easy way to quiet it down (PR's
  welcome!).
  
-#Querying
+## Querying
 
 To query the instance, hit the front-end with a query. Let's assume your FQDN is 'example.domain.tld':
 
