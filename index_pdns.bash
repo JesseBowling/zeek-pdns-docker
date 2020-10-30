@@ -13,7 +13,7 @@ do
   for FILE in `ls ${BRO_DNS_FILES}/* 2>/dev/null`
   do
     echo "`date` Starting to ingest ${FILE}"
-    /go/bin/bro-pdns index ${FILE}
+    /go/bin/bro-pdns index ${FILE} 2>&1 |grep -v 'Skipping record with missing fields:'
     if [[ $? == 0 ]]
     then
       echo "`date` Finished indexing file ${FILE} successfully; deleting"
