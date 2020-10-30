@@ -1,0 +1,53 @@
+version: '3'
+services:
+
+  db:
+    image: postgres
+    restart: on-failure
+    volumes:
+      - ./db:/data/db
+    environment:
+      POSTGRES_PASSWORD: "pdns"
+      POSTGRES_USER: "pdns"
+      PGDATA: "/data/db/postgres"
+
+  zeek-pdns-web:
+    build:
+      context: .
+      dockerfile: Dockerfile-web
+    ports:
+      - "8080:8080"
+    links:
+      - db:db
+    restart: on-failure
+    environment:
+      PDNS_STORE_TYPE: "postgresql"
+      PDNS_STORE_URI: "postgres://pdns:pdns@db/pdns?sslmode=disable"
+
+  zeek-pdns-ingest:
+    build:
+      context: .
+      dockerfile: Dockerfile-index
+    volumes:
+      - ./spool:/data
+    links:
+      - db:db
+    environment:
+      PDNS_STORE_TYPE: "postgresql"
+      PDNS_STORE_URI: "postgres://pdns:pdns@db/pdns?sslmode=disable"
+
+  minio:
+    image: minio/minio
+    volumes:
+      - ./spool:/data
+    ports:
+      - "9000:9000"
+    environment:
+      MINIO_ACCESS_KEY: "pdnslogs"
+      MINIO_SECRET_KEY: "KC6LRvwhNGfRrxA4JXZk"
+    command: server /data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
