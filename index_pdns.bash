@@ -1,26 +1,23 @@
 #!/bin/bash
 
 BRO_DNS_FILES=${BRO_DNS_FILES:-/data/logs}
-BRO_SKIP_FILES=${BRO_SKIP_FILES:-/data/skipped}
-SLEEP_TIME=${SLEEP_TIME:-60}
+SLEEP_TIME=${SLEEP_TIME:-3600}
 
-echo "`date` Sleeping for ${SLEEP_TIME} seconds waiting for containers to start..."
-sleep ${SLEEP_TIME}
+echo "`date` Sleeping for 30 seconds waiting for containers to start..."
+sleep 30
 
 while true
 do
   echo "`date` Starting search for new files..."
-  for FILE in `ls ${BRO_DNS_FILES}/* 2>/dev/null`
+  for FILE in `find ${BRO_DNS_FILES} -name dns*|sort -n 2>/dev/null`
   do
     echo "`date` Starting to ingest ${FILE}"
     /go/bin/bro-pdns index ${FILE}
     if [[ $? == 0 ]]
     then
-      echo "`date` Finished indexing file ${FILE} successfully; deleting"
-      rm ${FILE}
+      echo "`date` Finished indexing file ${FILE} successfully"
     else
-      echo "`date` Did not successfully index ${FILE}...skipping removal"
-      mv ${FILE} ${BRO_SKIP_FILES}
+      echo "`date` Did not successfully index ${FILE}...skipping for now"
     fi
   done
   echo "`date` Done with all found files...Sleeping for ${SLEEP_TIME}"

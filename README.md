@@ -7,13 +7,15 @@ This project uses Docker, docker-compose, and LetsEncrypt to spin up an instance
 # Setup
  
 * Set up a Linux machine with Docker and docker-compose installed
-    * This machine uses LetsEncrypt, so it should be publicly acessible (check public IP/firewalls)
+    * This machine uses LetsEncrypt, so it should be publicly accessible (check public IP/firewalls)
 * Clone this project somewhere on the VM
 * Add a user/password to use for the basic auth
     * `htpasswd ./auth/nginx.htpasswd pdnsuser`
 * Put the FQDN in the nginx configuration; for instance if your domain name is 'example.domain.tld'
     * `sed -i -e 's/YOUR_FQDN_HERE/example.domain.tld/g' ./auth/nginx.conf`
-* `mkdir -p ./skipped ./ingest ./spool`
+* Modify the `zeek-pdns-ingest` `volumes` stanza to be the location of your Zeek DNS log files (`/zeek` in our 
+  example config). If your log files have a non-default naming standard, you may need to adjust line 12 (find 
+  statement) in the `index_pdns.bash` script.
 * _Optional_: Adjust the `POSTGRES_PASSWORD` and `POSTGRES_USER` variables in `docker-compose.yml`. By default this
  container is never exposed to the network, but if through misconfiguration it was, the default user/password is
   terrible. You have been warned.
@@ -21,35 +23,8 @@ This project uses Docker, docker-compose, and LetsEncrypt to spin up an instance
 
 ## Operations
 
-Assuming the above all went well, you can now move any files you want ingested into the `./spool` directory. I
- typically run this setup on a box that is NOT the zeek sensor (and suggest you do too!), so I use the `./ingest
- ` directory as a temporary location before `mv`ing files from there to the `./spool` directory. 
- 
- For example, on my Zeek manager box (where the logs live) I have the following script cron'ed to run once a day as
-  the unprivileged user _pdns_:
- 
- ```bash
- #!/bin/bash
+Assuming the above all went well, 
 
-DAY=`date --date "yesterday" +%Y-%m-%d`
-cd /zeek/logs/${DAY}
-for FILE in `ls dns.*`
-do
-  scp -i /home/pdns/.ssh/id_ed25519 ./${FILE} pdns@zeek-pdns-box:~/incoming/${DAY}-${FILE}
-  if [[ $? == 0 ]]
-  then
-    ssh -i /home/pdns/.ssh/id_ed25519 pdns@zeek-pdns-box "mv incoming/${DAY}-${FILE} spool/"
-  fi
-done
-echo "Finished transferring files for ${DAY}"
-```
-The naming matters because the postgres database will use the filename to record whether or not it needs to index a
- file. If the filename has been seen before, it won't index it.
- 
-Once a file is in place, the `zeek-pdns-ingest` container will wake up every 60 seconds to see if there are files to
- ingest. If so, it will attempt to ingest them. If it's successful, it deletes the file, and if not, it moves the
-  file to the `./skipped` directory. 
-  
 You should probably consider restarting the pdns containers on at least a daily basis in order to dump the logs
 . Unfortunately the bro-pdns ingest is quite noisy from a log perspective, with no easy way to quiet it down (PR's
  welcome!).

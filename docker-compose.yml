@@ -2,7 +2,7 @@ version: '3'
 services:
 
   db:
-    image: postgres
+    image: postgres:13.2-alpine
     restart: always
     volumes:
       - ./db:/data/db
@@ -28,8 +28,7 @@ services:
       context: .
       dockerfile: Dockerfile-index
     volumes:
-      - ./skipped:/data/skipped
-      - ./spool:/data/logs
+      - /zeek:/data/logs
     links:
       - db:db
     environment:
